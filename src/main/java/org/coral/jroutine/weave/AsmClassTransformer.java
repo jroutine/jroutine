@@ -1,7 +1,6 @@
 package org.coral.jroutine.weave;
 
 import java.io.PrintWriter;
-import java.lang.reflect.Field;
 
 import org.coral.jroutine.Configs;
 import org.objectweb.asm.ClassReader;
@@ -27,16 +26,8 @@ public class AsmClassTransformer implements ClassTransformer {
         ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 
         // make sure that the transformed bytecode is sane
-//        ClassVisitor visitor = new CheckClassAdapter(cw, false);
-        ClassVisitor visitor = new CheckClassAdapter(cw);
-        if (null != CHECK_DATA_FLOW) {
-            try {
-                CHECK_DATA_FLOW.set(visitor, Boolean.FALSE);
-            } catch (final IllegalAccessException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
-        // prints the classes
+        ClassVisitor visitor = new CheckClassAdapter(cw, false);
+        // trace the classes
         if (Configs.isDebugEnabled()) {
             visitor = new TraceClassVisitor(visitor, new PrintWriter(System.out));
         }
@@ -46,20 +37,6 @@ public class AsmClassTransformer implements ClassTransformer {
         cr.accept(visitor, 0);
 
         return cw.toByteArray();
-    }
-    
-    final private static Field CHECK_DATA_FLOW;
-
-    static {
-        Field checkDataFlow = null;
-        try {
-            checkDataFlow = CheckClassAdapter.class.getDeclaredField("checkDataFlow");
-            checkDataFlow.setAccessible(true);
-        } catch (final NoSuchFieldException ex) {
-            // Normal, the field is available only since ASM 3.2
-        }
-
-        CHECK_DATA_FLOW = checkDataFlow;
     }
 
 }
