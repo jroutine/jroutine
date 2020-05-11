@@ -38,7 +38,7 @@ public class Observable<A> {
         observers.removeAllElements();
     }
 
-    public synchronized void notifyObserver(A action) {
+    public synchronized void notifyObservers(A action) {
         observers.stream().forEach(observer -> {
             observer.update(action);
         });

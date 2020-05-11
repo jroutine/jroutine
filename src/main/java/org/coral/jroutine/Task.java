@@ -3,7 +3,9 @@ package org.coral.jroutine;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.coral.jroutine.exception.IllegalTaskStateException;
+import org.coral.jroutine.exception.NonEnhancedClassException;
 import org.coral.jroutine.observer.Observable;
+import org.coral.jroutine.weave.OperandStackRecoder;
 
 /**
  * Coroutine, which can be regarded as a lightweight thread, scheduled in the
@@ -23,8 +25,13 @@ public class Task extends Observable<TaskState> implements Runnable {
     private int id;
     private String name;
     private int priority;
+    // enhanced class
     private Runnable target;
-    private volatile TaskState status = TaskState.NEW;
+    // each task needs to hold an operand stack recorder, to record the execution
+    // data of the current task.
+    private OperandStackRecoder recorder;
+
+    private volatile TaskState status;
 
     public Task(Runnable target) {
         this(DEFAULT_TASK_PREFIX_NAME, target, DEFAULT_PRIORITY);
@@ -40,27 +47,69 @@ public class Task extends Observable<TaskState> implements Runnable {
 
     public Task(String name, Runnable target, int priority) {
         this.setName(name);
-        this.target = target;
         this.setPriority(priority);
+
+        this.target = target;
+        this.recorder = new OperandStackRecoder(target);
         this.id = idSource.getAndIncrement();
+        this.status = TaskState.NEW;
     }
 
     public synchronized void start() {
         if (status != TaskState.NEW) {
             throw new IllegalTaskStateException();
         }
+
+        /*if (!(target instanceof Jroutine)) {
+            throw new NonEnhancedClassException();
+        }*/
+
+        try {
+            setStatus(TaskState.RUNNABLE);
+
+            OperandStackRecoder.set(this.recorder);
+            run();
+
+            // TODO how to judge whether the task has been completed
+
+        } catch (Exception e) {
+            setStatus(TaskState.TERMINATED);
+            throw e;
+        } finally {
+            OperandStackRecoder.clear();
+        }
+
     }
 
     public final void run() {
         target.run();
     }
 
-    public void suspend() {
-        
+    public synchronized void suspend() {
+        if (status != TaskState.RUNNABLE) {
+            throw new IllegalTaskStateException();
+        }
+        setStatus(TaskState.SUSPENDING);
+
+        recorder.suspend();
     }
 
     public void resume() {
-        
+        if (status != TaskState.SUSPENDING) {
+            throw new IllegalTaskStateException();
+        }
+        setStatus(TaskState.RUNNABLE);
+
+        run();
+    }
+
+    public void stop() {
+        if (status == TaskState.NEW) {
+            throw new IllegalTaskStateException();
+        }
+        setStatus(TaskState.TERMINATED);
+
+        recorder.suspend();
     }
 
     public void sleep(long millis) {
@@ -72,10 +121,6 @@ public class Task extends Observable<TaskState> implements Runnable {
     }
 
     public void join() {
-
-    }
-
-    public void stop() {
 
     }
 
@@ -106,6 +151,15 @@ public class Task extends Observable<TaskState> implements Runnable {
 
     public int getPriority() {
         return priority;
+    }
+
+    protected void setStatus(TaskState status) {
+        if (this.status == TaskState.TERMINATED) {
+            throw new IllegalTaskStateException();
+        }
+        this.status = status;
+
+        notifyObservers(status);
     }
 
 }
