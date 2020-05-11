@@ -165,11 +165,11 @@ public class OperandStack implements Serializable {
         ostack[otop++] = o;
     }
 
-    public boolean hasRefrence() {
+    public boolean hasReference() {
         return rtop > 0;
     }
 
-    public Object popRefrence() {
+    public Object popReference() {
         if (rtop == 0) {
             throw new EmptyStackException("pop reference");
         }
@@ -178,7 +178,7 @@ public class OperandStack implements Serializable {
         return r;
     }
 
-    public void pushRefrence(Object r) {
+    public void pushReference(Object r) {
         if (rtop == rstack.length) {
             Object[] hlp = new Object[rstack.length * 2];
             System.arraycopy(rstack, 0, hlp, 0, rstack.length);
