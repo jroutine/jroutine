@@ -1,6 +1,5 @@
 package org.coral.jroutine.weave;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.objectweb.asm.Label;
@@ -164,8 +163,6 @@ public class JroutineMethodAdapter extends MethodVisitor implements Opcodes {
 
     @Override
     public void visitLabel(Label label) {
-        System.out.println(Arrays.toString(labels.toArray()));
-        System.out.println(label);
         if (currentIndex < labels.size() && label == labels.get(currentIndex)) {
             int i = analyzer.instructions.indexOf(nodes.get(currentIndex));
             currentFrame = analyzer.basicAnalyzer.getFrames()[i];
@@ -285,7 +282,7 @@ public class JroutineMethodAdapter extends MethodVisitor implements Opcodes {
         Label endLabel = new Label();
         mv.visitLabel(endLabel);
 
-        mv.visitLocalVariable("__operandStackRecorder", "L" + RECORDER + ";", null, startLabel, endLabel,
+        mv.visitLocalVariable("recorder", "L" + RECORDER + ";", null, startLabel, endLabel,
                 operandStackRecorderVar);
 
         mv.visitMaxs(0, 0);

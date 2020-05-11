@@ -15,6 +15,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.InsnNode;
+import org.objectweb.asm.tree.LabelNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.VarInsnNode;
@@ -117,6 +118,15 @@ public class JroutineMethodAnalyzer extends MethodNode implements Opcodes {
             e.printStackTrace();
             accept(mv);
         }
+    }
+
+    // roll back the diffs between asm4 and asm8
+    @Override
+    protected LabelNode getLabelNode(Label label) {
+        if (!(label.info instanceof LabelNode)) {
+            label.info = new LabelNode(label);
+        }
+        return (LabelNode) label.info;
     }
 
     private HashMap<AbstractInsnNode, MethodInsnNode> findPromotableVars() throws AnalyzerException {

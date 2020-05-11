@@ -16,7 +16,7 @@ public class AsmTransformerTest extends TestCase {
     public void testTracer() throws IOException {
         byte[] bytes = new AsmClassTransformer().transform(new ClassReader(getClass().getResourceAsStream(LOOP)));
 
-        File file = new File("D:\\documents\\work\\eclipse-workspace\\jroutine\\target\\Loop.class");
+        File file = new File("C:\\Users\\lihao\\git\\jroutine\\target\\Loop.class");
         if (file.exists()) {
             file.delete();
         }
