@@ -1,4 +1,4 @@
-package org.coral.jroutine;
+package org.coral.jroutine.config;
 
 /**
  * multiple extension type.

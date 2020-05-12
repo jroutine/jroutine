@@ -3,7 +3,6 @@ package org.coral.jroutine;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.coral.jroutine.exception.IllegalTaskStateException;
-import org.coral.jroutine.exception.NonEnhancedClassException;
 import org.coral.jroutine.observer.Observable;
 import org.coral.jroutine.weave.OperandStackRecoder;
 

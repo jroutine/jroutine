@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.coral.jroutine.Configs;
-import org.coral.jroutine.ExtensionType;
+import org.coral.jroutine.config.Configs;
+import org.coral.jroutine.config.ExtensionType;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;

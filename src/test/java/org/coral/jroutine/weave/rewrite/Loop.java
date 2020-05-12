@@ -1,8 +1,9 @@
 package org.coral.jroutine.weave.rewrite;
 
-public class Loop {
+public class Loop implements Runnable {
 
-    public static void main(String[] args) {
+    @Override
+    public void run() {
         test();
         String s = new String();
         Object o = new Object();
