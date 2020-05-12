@@ -17,7 +17,7 @@ import org.coral.jroutine.schedule.lb.WeightRoundRobinLoadBalancer;
 public class StandardScheduler extends AbstractLifecycle implements Scheduler<Task> {
 
     private Executor<Task>[] executors;
-    private LoadBalancer<Executor<Task>> loadBalancer;
+    private LoadBalancer loadBalancer;
 
     @Override
     protected void initInternal() throws LifecycleException {
