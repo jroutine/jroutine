@@ -24,6 +24,7 @@ public final class MonitoringFrame extends Frame<BasicValue> {
         monitored = new LinkedList<Integer>();
     }
 
+    @Override
     public void execute(AbstractInsnNode insn, Interpreter<BasicValue> interpreter)
             throws AnalyzerException {
 
@@ -53,11 +54,13 @@ public final class MonitoringFrame extends Frame<BasicValue> {
             }
 
         } else {
+            System.out.println(insn.getOpcode() + "------" + insn + "-----" + interpreter.getClass());
             super.execute(insn, interpreter);
         }
     }
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
+    @Override
     public Frame<BasicValue> init(Frame frame) {
         super.init(frame);
         if (frame instanceof MonitoringFrame) {

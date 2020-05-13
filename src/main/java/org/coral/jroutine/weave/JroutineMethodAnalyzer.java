@@ -206,7 +206,7 @@ public class JroutineMethodAnalyzer extends MethodNode implements Opcodes {
                 doNew.add(node1);
                 if (requireDup) {
                     doNew.add(new InsnNode(DUP));
-                    doNew.add(new InsnNode(DUP_X1));
+                    doNew.add(new InsnNode(DUP2_X1));
                     doNew.add(new InsnNode(POP2));
                     updateMaxStack = updateMaxStack < 2 ? 2 : updateMaxStack;
                 } else {
