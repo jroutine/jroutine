@@ -35,7 +35,7 @@ public class JroutineClassAdapter extends ClassVisitor implements Opcodes {
         // add marker interface
         newInterfaces[newInterfaces.length - 1] = Type.getInternalName(Jroutine.class);
 
-        cv.visit(version, access, name, signature, superName, interfaces);
+        cv.visit(version, access, name, signature, superName, newInterfaces);
     }
 
     @Override
