@@ -1,7 +1,7 @@
 package org.coral.jroutine.weave;
 
 /**
- * OperandStackRecoder
+ * record the status of the operand stack¡£
  * 
  * @author lihao
  * @date 2020-05-10
@@ -12,8 +12,9 @@ public class OperandStackRecoder extends OperandStack {
 
     private static ThreadLocal<OperandStackRecoder> threadMap = new ThreadLocal<OperandStackRecoder>();
 
-    public volatile boolean isRestoring;
-    public volatile boolean isCapturing;
+    public volatile boolean isRestoring = false;
+    public volatile boolean isCapturing = false;
+    public volatile boolean isDone = false;
 
     public OperandStackRecoder(Runnable pRunnable) {
         super(pRunnable);
@@ -37,6 +38,10 @@ public class OperandStackRecoder extends OperandStack {
     public void suspend() {
         isCapturing = !isRestoring;
         isRestoring = false;
+    }
+
+    public void done() {
+        isDone = true;
     }
 
 }

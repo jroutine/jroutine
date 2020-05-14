@@ -6,6 +6,8 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.analysis.BasicValue;
 import org.objectweb.asm.tree.analysis.Frame;
@@ -24,8 +26,9 @@ public class JroutineMethodAdapter extends MethodVisitor implements Opcodes {
     private static final String PUSH_METHOD = "push";
 
     private JroutineMethodAnalyzer analyzer;
-    protected List<Label> labels;
-    protected List<MethodInsnNode> nodes;
+    protected List<Label> buryingLabels;
+    protected List<MethodInsnNode> buryingNodes;
+    protected List<AbstractInsnNode> endNodes;
     protected int operandStackRecorderVar;
 
     private Label startLabel = new Label();
@@ -35,8 +38,9 @@ public class JroutineMethodAdapter extends MethodVisitor implements Opcodes {
     public JroutineMethodAdapter(JroutineMethodAnalyzer analyzer) {
         super(ASM8, analyzer.mv);
         this.analyzer = analyzer;
-        this.labels = analyzer.labels;
-        this.nodes = analyzer.nodes;
+        this.buryingLabels = analyzer.buryingLabels;
+        this.buryingNodes = analyzer.buryingNodes;
+        this.endNodes = analyzer.endNodes;
         this.operandStackRecorderVar = analyzer.operandStackRecorderVar;
     }
 
@@ -44,7 +48,7 @@ public class JroutineMethodAdapter extends MethodVisitor implements Opcodes {
     public void visitCode() {
         mv.visitCode();
 
-        int fsize = labels.size();
+        int fsize = buryingLabels.size();
         Label[] restoreLabels = new Label[fsize];
         for (int i = 0; i < fsize; i++) {
             restoreLabels[i] = new Label();
@@ -70,10 +74,10 @@ public class JroutineMethodAdapter extends MethodVisitor implements Opcodes {
         mv.visitTableSwitchInsn(0, fsize - 1, l0, restoreLabels);
 
         for (int i = 0; i < fsize; i++) {
-            Label frameLabel = labels.get(i);
+            Label frameLabel = buryingLabels.get(i);
             mv.visitLabel(restoreLabels[i]);
 
-            MethodInsnNode mn = nodes.get(i);
+            MethodInsnNode mn = buryingNodes.get(i);
             int index = analyzer.instructions.indexOf(mn);
             Frame<BasicValue> frame = analyzer.basicAnalyzer.getFrames()[index];
 
@@ -106,7 +110,7 @@ public class JroutineMethodAdapter extends MethodVisitor implements Opcodes {
                     }
                 }
             }
-            
+
             if (frame instanceof MonitoringFrame) {
                 int[] monitoredLocals = ((MonitoringFrame) frame).getMonitored();
                 for (int monitoredLocal : monitoredLocals) {
@@ -158,13 +162,22 @@ public class JroutineMethodAdapter extends MethodVisitor implements Opcodes {
             mv.visitJumpInsn(GOTO, frameLabel);
         }
 
+        // it can be used to identify whether the method normally end
+        for (int i = 0; i < endNodes.size(); i++) {
+            InsnList insns = new InsnList();
+            insns.add(new MethodInsnNode(INVOKESTATIC, RECORDER, "get", "()L" + RECORDER + ";", false));
+            insns.add(new MethodInsnNode(INVOKEVIRTUAL, RECORDER, "done", "()V", false));
+
+            analyzer.instructions.insertBefore(endNodes.get(i), insns);
+        }
+
         mv.visitLabel(l0);
     }
 
     @Override
     public void visitLabel(Label label) {
-        if (currentIndex < labels.size() && label == labels.get(currentIndex)) {
-            int i = analyzer.instructions.indexOf(nodes.get(currentIndex));
+        if (currentIndex < buryingLabels.size() && label == buryingLabels.get(currentIndex)) {
+            int i = analyzer.instructions.indexOf(buryingNodes.get(currentIndex));
             currentFrame = analyzer.basicAnalyzer.getFrames()[i];
         }
         mv.visitLabel(label);
@@ -266,7 +279,7 @@ public class JroutineMethodAdapter extends MethodVisitor implements Opcodes {
                     mv.visitInsn(MONITOREXIT);
                 }
             }
-            
+
             Type methodReturnType = Type.getReturnType(analyzer.desc);
             pushDefault(methodReturnType);
             mv.visitInsn(methodReturnType.getOpcode(IRETURN));
@@ -275,6 +288,7 @@ public class JroutineMethodAdapter extends MethodVisitor implements Opcodes {
             currentIndex++;
             currentFrame = null;
         }
+
     }
 
     @Override
@@ -282,8 +296,7 @@ public class JroutineMethodAdapter extends MethodVisitor implements Opcodes {
         Label endLabel = new Label();
         mv.visitLabel(endLabel);
 
-        mv.visitLocalVariable("recorder", "L" + RECORDER + ";", null, startLabel, endLabel,
-                operandStackRecorderVar);
+        mv.visitLocalVariable("recorder", "L" + RECORDER + ";", null, startLabel, endLabel, operandStackRecorderVar);
 
         mv.visitMaxs(0, 0);
     }

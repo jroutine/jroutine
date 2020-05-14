@@ -54,7 +54,6 @@ public final class MonitoringFrame extends Frame<BasicValue> {
             }
 
         } else {
-            System.out.println(insn.getOpcode() + "------" + insn + "-----" + interpreter.getClass());
             super.execute(insn, interpreter);
         }
     }

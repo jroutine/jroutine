@@ -40,13 +40,14 @@ public class JroutineMethodAnalyzer extends MethodNode implements Opcodes {
     private static final Logger logger = LoggerFactory.getLogger(JroutineMethodAnalyzer.class);
 
     private String className;
-    private List<MethodInsnNode> methods = new ArrayList<MethodInsnNode>();
+    private List<MethodInsnNode> probablyNewVars = new ArrayList<MethodInsnNode>();
 
     protected MethodVisitor mv;
-    protected List<Label> labels = new ArrayList<Label>();
-    protected List<MethodInsnNode> nodes = new ArrayList<MethodInsnNode>();
+    protected List<Label> buryingLabels = new ArrayList<Label>();
+    protected List<MethodInsnNode> buryingNodes = new ArrayList<MethodInsnNode>();
     protected int operandStackRecorderVar;
     protected Analyzer<BasicValue> basicAnalyzer;
+    protected List<AbstractInsnNode> endNodes = new ArrayList<AbstractInsnNode>();
 
     public JroutineMethodAnalyzer(String className, MethodVisitor mv, int access, String name, String descriptor,
             String signature, String[] exceptions) {
@@ -68,7 +69,7 @@ public class JroutineMethodAnalyzer extends MethodNode implements Opcodes {
         MethodInsnNode mn = new MethodInsnNode(opcode, owner, name, descriptor, isInterface);
         // navigate to the instruction where the object needs to be created
         if (opcode == INVOKESPECIAL || "<init>".equals(name)) {
-            methods.add(mn);
+            probablyNewVars.add(mn);
         }
 
         // support multiple extension types, which have different degrees of impact on
@@ -76,16 +77,25 @@ public class JroutineMethodAnalyzer extends MethodNode implements Opcodes {
         if (isSuspendableInsn(opcode, name)) {
             Label label = new Label();
             super.visitLabel(label);
-            labels.add(label);
-            nodes.add(mn);
+            buryingLabels.add(label);
+            buryingNodes.add(mn);
         }
 
         instructions.add(mn);
     }
+    
+    @Override
+    public void visitInsn(int opcode) {
+        super.visitInsn(opcode);
+        // ends of the method
+        if (isEndInsn(opcode)) {
+            endNodes.add(instructions.getLast());
+        }
+    }
 
     @Override
     public void visitEnd() {
-        if (instructions.size() == 0 || labels.size() == 0) {
+        if (instructions.size() == 0 || buryingLabels.size() == 0) {
             accept(mv);
             return;
         }
@@ -136,8 +146,8 @@ public class JroutineMethodAnalyzer extends MethodNode implements Opcodes {
         sourceAnalyzer.analyze(className, this);
 
         Frame<SourceValue>[] frames = sourceAnalyzer.getFrames();
-        for (int i = 0; i < methods.size(); i++) {
-            MethodInsnNode methodInsn = methods.get(i);
+        for (int i = 0; i < probablyNewVars.size(); i++) {
+            MethodInsnNode methodInsn = probablyNewVars.get(i);
             Frame<SourceValue> frame = frames[instructions.indexOf(methodInsn)];
             Type[] args = Type.getArgumentTypes(methodInsn.desc);
 
@@ -281,6 +291,10 @@ public class JroutineMethodAnalyzer extends MethodNode implements Opcodes {
             return true;
         }
         return false;
+    }
+
+    private boolean isEndInsn(int opcode) {
+        return opcode >= IRETURN && opcode <= RETURN;
     }
 
     private boolean isMethodInsn(int opcode, String name) {
