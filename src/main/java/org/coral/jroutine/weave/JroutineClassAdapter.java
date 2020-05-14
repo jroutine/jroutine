@@ -23,6 +23,12 @@ public class JroutineClassAdapter extends ClassVisitor implements Opcodes {
 
     @Override
     public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+
+        if ((access & (ACC_ABSTRACT | ACC_INTERFACE)) != 0) {
+            cv.visit(version, access, name, signature, superName, interfaces);
+            return;
+        }
+
         owner = name;
 
         for (int i = 0; i < interfaces.length; i++) {

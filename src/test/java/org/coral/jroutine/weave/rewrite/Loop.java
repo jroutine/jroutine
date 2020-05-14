@@ -1,17 +1,22 @@
 package org.coral.jroutine.weave.rewrite;
 
+
 public class Loop implements Runnable {
 
+    private int i = 0;
+    
     @Override
     public void run() {
-        test();
-        String s = new String();
-        Object o = new Object();
-        System.out.println(s.equals(o));
+        print();
     }
 
-    private static void test() {
-        // TODO Auto-generated method stub
-        
+    private void print() {
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+        }
+        System.out.println(i++);
+        print();
     }
+
 }

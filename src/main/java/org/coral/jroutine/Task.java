@@ -13,7 +13,7 @@ import org.coral.jroutine.weave.OperandStackRecoder;
  * @author lihao
  * @date 2020-04-29
  */
-public class Task extends Observable<TaskState> implements Runnable {
+public class Task extends Observable<TaskState> implements Runnable, Comparable<Task> {
 
     private final static AtomicInteger idSource = new AtomicInteger(0);
     private final static String DEFAULT_TASK_PREFIX_NAME = "DEFAULT-TASK-";
@@ -30,7 +30,7 @@ public class Task extends Observable<TaskState> implements Runnable {
     // data of the current task.
     private OperandStackRecoder recorder;
 
-    private volatile TaskState status;
+    private volatile TaskState status = TaskState.NEW;
 
     public Task(Runnable target) {
         this(DEFAULT_TASK_PREFIX_NAME, target, DEFAULT_PRIORITY);
@@ -45,29 +45,29 @@ public class Task extends Observable<TaskState> implements Runnable {
     }
 
     public Task(String name, Runnable target, int priority) {
-        this.setName(name);
-        this.setPriority(priority);
-
         this.target = target;
         this.recorder = new OperandStackRecoder(target);
         this.id = idSource.getAndIncrement();
-        this.status = TaskState.NEW;
+
+        this.setName(name);
+        this.setPriority(priority);
     }
 
-    public synchronized void start() {
+    public final void run() {
         if (status != TaskState.NEW) {
             throw new IllegalTaskStateException();
         }
 
-        /*if (!(target instanceof Jroutine)) {
-            throw new NonEnhancedClassException();
-        }*/
+        /*
+         * if (!(target instanceof Jroutine)) { throw new NonEnhancedClassException(); }
+         */
 
         try {
             setStatus(TaskState.RUNNABLE);
 
             OperandStackRecoder.set(this.recorder);
-            run();
+
+            target.run();
 
             // TODO how to judge whether the task has been completed
 
@@ -77,11 +77,6 @@ public class Task extends Observable<TaskState> implements Runnable {
         } finally {
             OperandStackRecoder.clear();
         }
-
-    }
-
-    public final void run() {
-        target.run();
     }
 
     public synchronized void suspend() {
@@ -99,7 +94,7 @@ public class Task extends Observable<TaskState> implements Runnable {
         }
         setStatus(TaskState.RUNNABLE);
 
-        run();
+        target.run();
     }
 
     public void stop() {
@@ -109,18 +104,6 @@ public class Task extends Observable<TaskState> implements Runnable {
         setStatus(TaskState.TERMINATED);
 
         recorder.suspend();
-    }
-
-    public void sleep(long millis) {
-
-    }
-
-    public void join(long millis) {
-
-    }
-
-    public void join() {
-
     }
 
     public int getId() {
@@ -150,6 +133,11 @@ public class Task extends Observable<TaskState> implements Runnable {
 
     public int getPriority() {
         return priority;
+    }
+
+    @Override
+    public int compareTo(Task t) {
+        return this.priority >= t.priority ? 1 : -1;
     }
 
     protected void setStatus(TaskState status) {
