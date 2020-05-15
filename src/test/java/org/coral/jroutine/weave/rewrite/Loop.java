@@ -1,6 +1,5 @@
 package org.coral.jroutine.weave.rewrite;
 
-
 public class Loop implements Runnable {
 
     private int i = 0;

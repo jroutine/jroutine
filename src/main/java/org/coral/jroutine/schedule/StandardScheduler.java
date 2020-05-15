@@ -1,8 +1,11 @@
 package org.coral.jroutine.schedule;
 
+import java.util.concurrent.TimeUnit;
+
 import org.coral.jroutine.AbstractLifecycle;
 import org.coral.jroutine.Task;
 import org.coral.jroutine.config.Configs;
+import org.coral.jroutine.config.LoadBalanceType;
 import org.coral.jroutine.exception.LifecycleException;
 import org.coral.jroutine.schedule.lb.LoadBalancer;
 import org.coral.jroutine.schedule.lb.RoundRobinLoadBalancer;
@@ -15,6 +18,11 @@ import org.coral.jroutine.schedule.lb.WeightRoundRobinLoadBalancer;
  * @date 2020-05-12
  */
 public class StandardScheduler extends AbstractLifecycle implements Scheduler<Task> {
+
+    private static final long THREAD_KEEP_ALIVE_TIME = 1;
+    private static final TimeUnit KEEP_ALIVE_TIME_UNIT = TimeUnit.HOURS;
+    private static final int EXECUTOR_QUEUE_SIZE = 1000;
+    private static final LoadBalanceType DEFAULT_LOAD_BALANCER = LoadBalanceType.ROUND_ROBIN;
 
     private Executor<Task>[] executors;
     private LoadBalancer loadBalancer;
@@ -46,17 +54,27 @@ public class StandardScheduler extends AbstractLifecycle implements Scheduler<Ta
     }
 
     private void initExecutors() {
-        int coreSize = Configs.getExecutorsCoreSize() == 0 ? Runtime.getRuntime().availableProcessors()
+        int coreSize = Configs.getExecutorsCoreSize() == -1 ? Runtime.getRuntime().availableProcessors()
                 : Configs.getExecutorsCoreSize();
+        long keepAliveTime = Configs.getThreadKeepAliveTime() == -1 ? THREAD_KEEP_ALIVE_TIME
+                : Configs.getThreadKeepAliveTime();
+        TimeUnit timeUnit = Configs.getKeepAliveTimeUnit() == null ? KEEP_ALIVE_TIME_UNIT
+                : Configs.getKeepAliveTimeUnit();
+        int queueSize = Configs.getExecutorQueueSize() == -1 ? EXECUTOR_QUEUE_SIZE : Configs.getExecutorQueueSize();
+
         executors = new PriorityExecutor[coreSize];
+
         for (int i = 0; i < coreSize; i++) {
-            executors[i] = new PriorityExecutor();
+            executors[i] = new PriorityExecutor(keepAliveTime, timeUnit, queueSize);
             executors[i].init();
         }
     }
 
     private void initLoadBalancer() {
-        switch (Configs.getLoadBalanceType()) {
+        LoadBalanceType type = Configs.getLoadBalanceType() == null ? DEFAULT_LOAD_BALANCER
+                : Configs.getLoadBalanceType();
+
+        switch (type) {
         case WEIGHT_ROUND_ROBIN:
             loadBalancer = new WeightRoundRobinLoadBalancer();
             break;

@@ -9,6 +9,12 @@ import org.coral.jroutine.weave.WeaverClassLoader;
 
 import junit.framework.TestCase;
 
+/**
+ * StandardSchedulerTest
+ * 
+ * @author lihao
+ * @date 2020-05-14
+ */
 public class StandardSchedulerTest extends TestCase {
 
     private StandardScheduler scheduler;
@@ -25,15 +31,15 @@ public class StandardSchedulerTest extends TestCase {
             Class<?> clazz = classLoader.loadClass("org.coral.jroutine.weave.rewrite.Loop");
             Task task = new Task((Runnable) clazz.newInstance());
             scheduler.submit(task);
-            
+
             Thread.sleep(2000);
             System.out.println("suspend");
             task.suspend();
-            Thread.sleep(2000);
+            Thread.sleep(4000);
             System.out.println("resume");
             task.resume();
-            
-            Thread.sleep(10000);
+
+            Thread.sleep(1000);
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {
@@ -41,7 +47,7 @@ public class StandardSchedulerTest extends TestCase {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-        
+
     }
 
 }

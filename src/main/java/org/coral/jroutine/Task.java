@@ -3,6 +3,7 @@ package org.coral.jroutine;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.coral.jroutine.exception.IllegalTaskStateException;
+import org.coral.jroutine.exception.NonEnhancedClassException;
 import org.coral.jroutine.observer.Observable;
 import org.coral.jroutine.weave.OperandStackRecoder;
 
@@ -58,9 +59,9 @@ public class Task extends Observable<TaskState> implements Runnable, Comparable<
             throw new IllegalTaskStateException();
         }
 
-        /*
-         * if (!(target instanceof Jroutine)) { throw new NonEnhancedClassException(); }
-         */
+        if (!(target instanceof Jroutine)) {
+            throw new NonEnhancedClassException();
+        }
 
         try {
             setStatus(TaskState.RUNNABLE);
@@ -75,7 +76,7 @@ public class Task extends Observable<TaskState> implements Runnable, Comparable<
             setStatus(TaskState.TERMINATED);
             throw e;
         } finally {
-            OperandStackRecoder.clear();
+            // OperandStackRecoder.clear();
         }
     }
 

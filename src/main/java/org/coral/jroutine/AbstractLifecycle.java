@@ -3,7 +3,7 @@ package org.coral.jroutine;
 import org.coral.jroutine.exception.LifecycleException;
 
 /**
- * AbstractLifecycle
+ * events need to be executed in order.
  * 
  * @author lihao
  * @date 2020-05-12

@@ -19,10 +19,20 @@ public class PriorityExecutor extends AbstractLifecycle implements Executor<Task
     private PriorityBlockingQueue<Runnable> queue;
     private ThreadPoolExecutor threadPoolExecutor;
 
+    private long keepAliveTime;
+    private TimeUnit timeUnit;
+    private int queueSize;
+
+    public PriorityExecutor(long keepAliveTime, TimeUnit timeUnit, int queueSize) {
+        this.keepAliveTime = keepAliveTime;
+        this.timeUnit = timeUnit;
+        this.queueSize = queueSize;
+    }
+
     @Override
     protected void initInternal() throws LifecycleException {
-        queue = new PriorityBlockingQueue<Runnable>(1000);
-        threadPoolExecutor = new ThreadPoolExecutor(1, 1, 1, TimeUnit.HOURS, queue,
+        queue = new PriorityBlockingQueue<Runnable>(queueSize);
+        threadPoolExecutor = new ThreadPoolExecutor(1, 1, keepAliveTime, timeUnit, queue,
                 new NamedThreadFactory("EXECUTOR", false));
     }
 
