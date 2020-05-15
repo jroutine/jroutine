@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class Configs {
 
-    private static boolean debug = false;
+    private static boolean debug = true;
     private static int executorsCoreSize = -1;
     private static ExtensionType extensionType = ExtensionType.METHOD;
     private static LoadBalanceType loadBalanceType = null;

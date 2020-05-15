@@ -43,7 +43,9 @@ public class StandardScheduler extends AbstractLifecycle implements Scheduler<Ta
             executor.start();
         }
 
-        WatchDog.me().start();
+        if (Configs.isDebugEnabled()) {
+            WatchDog.me().start();
+        }
     }
 
     @Override

@@ -1,7 +1,11 @@
 package org.coral.jroutine.schedule;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.coral.jroutine.AbstractLifecycle;
 import org.coral.jroutine.exception.LifecycleException;
@@ -19,8 +23,10 @@ public class WatchDog extends AbstractLifecycle {
     private static final Logger logger = LoggerFactory.getLogger(WatchDog.class);
     private static final WatchDog WATCH_DOG = new WatchDog();
 
+    private SimpleDateFormat formatter = new SimpleDateFormat("YYYY-MM-DD HH:mm:ss");
+    private Timer timer;
+    private TimerTask task;
     private List<Monitor> monitors;
-    private Thread daemon;
 
     public WatchDog() {
         init();
@@ -42,32 +48,30 @@ public class WatchDog extends AbstractLifecycle {
     protected void initInternal() throws LifecycleException {
         monitors = new ArrayList<Monitor>();
 
-        daemon = new Thread(new Runnable() {
-
+        timer = new Timer("JROUTINE-WATCHDOG-T1", true);
+        task = new TimerTask() {
+            
             @Override
             public void run() {
-
                 synchronized (monitors) {
+                    logger.info("Time:" + formatter.format(new Date()));
                     for (int i = 0; i < monitors.size(); i++) {
                         // just print it out
                         logger.info(monitors.get(i).status());
                     }
                 }
-
             }
-        }, "JROUTINE-WATCHDOG-T1");
-        daemon.setDaemon(true);
-        daemon.setPriority(Thread.MIN_PRIORITY);
+        };
     }
 
     @Override
     protected void startInternal() throws LifecycleException {
-        daemon.start();
+        timer.schedule(task, 1000, 1000 * 10);
     }
 
     @Override
     protected void stopInternal() throws LifecycleException {
         monitors = new ArrayList<Monitor>();
-        daemon = null;
+        timer.cancel();
     }
 }
