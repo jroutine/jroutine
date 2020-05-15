@@ -1,7 +1,5 @@
 package org.coral.jroutine.schedule.lb;
 
-import java.util.Random;
-
 import junit.framework.Assert;
 import junit.framework.TestCase;
 
@@ -15,8 +13,7 @@ public class LoadBalancerTest extends TestCase {
 
         instances = new Instance[4];
         for (int i = 0; i < instances.length; i++) {
-            int weight = (int) Math.floor(new Random().nextInt(10) * 10);
-            instances[i] = new Server(weight);
+            instances[i] = new Server(i);
         }
     }
 

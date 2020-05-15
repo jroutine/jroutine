@@ -10,6 +10,8 @@ import org.coral.jroutine.exception.LifecycleException;
 import org.coral.jroutine.schedule.lb.LoadBalancer;
 import org.coral.jroutine.schedule.lb.RoundRobinLoadBalancer;
 import org.coral.jroutine.schedule.lb.WeightRoundRobinLoadBalancer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * the standard scheduler, assigns executor to the submitted task.
@@ -18,6 +20,8 @@ import org.coral.jroutine.schedule.lb.WeightRoundRobinLoadBalancer;
  * @date 2020-05-12
  */
 public class StandardScheduler extends AbstractLifecycle implements Scheduler<Task> {
+
+    private static final Logger logger = LoggerFactory.getLogger(StandardScheduler.class);
 
     private static final long THREAD_KEEP_ALIVE_TIME = 1;
     private static final TimeUnit KEEP_ALIVE_TIME_UNIT = TimeUnit.HOURS;
@@ -38,6 +42,8 @@ public class StandardScheduler extends AbstractLifecycle implements Scheduler<Ta
         for (Executor<Task> executor : executors) {
             executor.start();
         }
+
+        WatchDog.me().start();
     }
 
     @Override
@@ -45,6 +51,8 @@ public class StandardScheduler extends AbstractLifecycle implements Scheduler<Ta
         for (Executor<Task> executor : executors) {
             executor.stop();
         }
+
+        WatchDog.me().stop();
     }
 
     @Override
@@ -68,6 +76,10 @@ public class StandardScheduler extends AbstractLifecycle implements Scheduler<Ta
             executors[i] = new PriorityExecutor(keepAliveTime, timeUnit, queueSize);
             executors[i].init();
         }
+
+        logger.info(
+                "executor initialized successfully, core_size={}, thread_keep_alive_time={}, keep_alive_time_unit={}, executor_queue_size={}",
+                coreSize, keepAliveTime, timeUnit, queueSize);
     }
 
     private void initLoadBalancer() {
@@ -82,6 +94,8 @@ public class StandardScheduler extends AbstractLifecycle implements Scheduler<Ta
             loadBalancer = new RoundRobinLoadBalancer();
             break;
         }
+
+        logger.info("load balancer initialized successfully, type={}", type);
     }
 
     private Executor<Task> selectExecutor() {
