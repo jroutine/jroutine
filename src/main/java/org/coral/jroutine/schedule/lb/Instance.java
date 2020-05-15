@@ -1,5 +1,7 @@
 package org.coral.jroutine.schedule.lb;
 
+import org.coral.jroutine.exception.NotImplementedException;
+
 /**
  * unit of load balancer.
  * 
@@ -9,6 +11,14 @@ package org.coral.jroutine.schedule.lb;
 public interface Instance {
 
     default int getWeight() {
-        return -1;
+        throw new NotImplementedException();
+    }
+
+    default int getCurrentWeight() {
+        throw new NotImplementedException();
+    }
+
+    default void setCurrentWeight(int weight) {
+        throw new NotImplementedException();
     }
 }
